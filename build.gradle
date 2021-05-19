@@ -8,8 +8,25 @@
 
 plugins {
     // Apply the java-library plugin for API and implementation separation.
+    id 'application'
     id 'java-library'
     id "com.diffplug.spotless" version "5.8.2"
+}
+
+application {
+    mainClass = 's3up.Entry'
+}
+
+jar {
+    manifest {
+        attributes(
+                'Main-Class': 's3up.Entry'
+        )
+    }
+}
+compileJava {
+    sourceCompatibility = 11
+    targetCompatibility = 11
 }
 
 repositories {
@@ -31,7 +48,7 @@ dependencies {
 
     // CLI Display bits
     implementation 'me.tongfei:progressbar:0.9.0'
-    implementation 'net.sourceforge.argparse4j:argparse4j:0.2.0'
+    api 'net.sourceforge.argparse4j:argparse4j:0.2.0'
 
     // https://mvnrepository.com/artifact/com.amazonaws/aws-java-sdk
     implementation group: 'com.amazonaws', name: 'aws-java-sdk', version: '1.11.1020'
