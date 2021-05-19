@@ -6,7 +6,6 @@ package s3up;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Paths;
 
 class EntryTest {
@@ -15,10 +14,10 @@ class EntryTest {
         String bucketName = "chia-test-7923-9832";
 
         System.out.println();
-        File file = Paths.get("../README.md").toFile();
+        File file = Paths.get("README.md").toFile();
         System.out.println(Paths.get("").toAbsolutePath().toString());
-        Upload.uploadFile(file, bucketName);
+        Upload.defaultSettings().uploadFile(file, bucketName);
 
-        Entry.main(new String[]{Entry.BUCKET_FLAG, "foo", Entry.DRYRUN_FLAG, "true", "../README.md"});
+        Entry.main(new String[]{Entry.BUCKET_FLAG, "foo", Entry.DRYRUN_FLAG, "true", "README.md"});
     }
 }

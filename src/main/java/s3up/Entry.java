@@ -1,17 +1,12 @@
 package s3up;
 
-import com.google.common.base.Preconditions;
 import net.sourceforge.argparse4j.ArgumentParsers;
-import net.sourceforge.argparse4j.impl.Arguments;
-import net.sourceforge.argparse4j.inf.ArgumentAction;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
 
 import java.io.*;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
 public class Entry {
@@ -60,7 +55,7 @@ public class Entry {
             return;
         }
 
-        Upload.uploadFile(file, bucketName);
+        Upload.defaultSettings().uploadFile(file, bucketName);
 
         if(delete){
             boolean succcess = file.delete();

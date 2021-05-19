@@ -3,7 +3,6 @@ package s3up;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.*;
 import me.tongfei.progressbar.ProgressBar;
 
 import javax.xml.bind.DatatypeConverter;
@@ -17,8 +16,19 @@ import java.util.concurrent.ForkJoinTask;
 import java.util.stream.IntStream;
 
 public class Upload {
-    public static void uploadFile(File file, String bucketName) {
-        int blockSize = 5 * 1024 * 1024;
+    private final int threads;
+    private final int blockSize;
+
+    private Upload(int threads, int blockSize){
+        this.threads = threads;
+        this.blockSize = blockSize;
+    }
+
+    public static Upload defaultSettings(){
+        return new Upload(Runtime.getRuntime().availableProcessors()*2, 5 * 1024 * 1024);
+    }
+
+    public void uploadFile(File file, String bucketName) {
         String keyName = file.getName();
 
         AmazonS3 amazonS3 = AmazonS3ClientBuilder
@@ -46,7 +56,7 @@ public class Upload {
             mpc.init();
 
             pb.setExtraMessage("Chunks");
-            ForkJoinPool customThreadPool = new ForkJoinPool(20);
+            ForkJoinPool customThreadPool = new ForkJoinPool(threads);
 
             final ForkJoinTask<?> task = customThreadPool.submit(() -> {
                 IntStream.range(0, chunkCount).mapToObj(chunkId -> {
