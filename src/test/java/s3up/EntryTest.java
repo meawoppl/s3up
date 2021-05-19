@@ -5,6 +5,8 @@ package s3up;
 
 import java.io.File;
 import java.nio.file.Paths;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 class EntryTest {
@@ -12,11 +14,20 @@ class EntryTest {
     public void testSomeLibraryMethod() {
         String bucketName = "chia-test-7923-9832";
 
-        System.out.println();
         File file = Paths.get("README.md").toFile();
-        System.out.println(Paths.get("").toAbsolutePath().toString());
         Upload.defaultSettings().uploadFile(file, bucketName);
 
-        Entry.main(new String[] {Entry.BUCKET_FLAG, "foo", Entry.DRYRUN_FLAG, "true", "README.md"});
+        AtomicInteger returnCodeCatch = new AtomicInteger(-1);
+        Entry.main(
+                new String[] {
+                    "--" + Entry.BUCKET_FLAG,
+                    "foo",
+                    "--" + Entry.DRYRUN_FLAG,
+                    "--" + Entry.DELETE_LOCAL_FLAG,
+                    "README.md"
+                },
+                returnCodeCatch::set);
+
+        Assertions.assertEquals(returnCodeCatch.get(), 0);
     }
 }

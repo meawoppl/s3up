@@ -8,7 +8,6 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -23,21 +22,22 @@ class UploadTest {
     }
 
     @Test
-    public void testCallback(){
+    public void testCallback() {
         final Path path = Paths.get("README.md");
         AtomicBoolean min = new AtomicBoolean(false);
         AtomicBoolean max = new AtomicBoolean(false);
 
         final Upload upload = Upload.defaultSettings();
-        upload.setProgress((done, total)->{
-            if(done == 0){
-                min.set(true);
-            }
+        upload.setProgress(
+                (done, total) -> {
+                    if (done == 0) {
+                        min.set(true);
+                    }
 
-            if(done==total){
-                max.set(true);
-            }
-        });
+                    if (done.equals(total)) {
+                        max.set(true);
+                    }
+                });
         upload.uploadFile(path.toFile(), TEST_BUCKET_NAME);
 
         Assertions.assertTrue(min.get());
