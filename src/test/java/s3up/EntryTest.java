@@ -3,10 +3,9 @@
  */
 package s3up;
 
-import org.junit.jupiter.api.Test;
-
 import java.io.File;
 import java.nio.file.Paths;
+import org.junit.jupiter.api.Test;
 
 class EntryTest {
     @Test
@@ -18,6 +17,6 @@ class EntryTest {
         System.out.println(Paths.get("").toAbsolutePath().toString());
         Upload.defaultSettings().uploadFile(file, bucketName);
 
-        Entry.main(new String[]{Entry.BUCKET_FLAG, "foo", Entry.DRYRUN_FLAG, "true", "README.md"});
+        Entry.main(new String[] {Entry.BUCKET_FLAG, "foo", Entry.DRYRUN_FLAG, "true", "README.md"});
     }
 }
