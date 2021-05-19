@@ -30,7 +30,7 @@ public class Entry {
                 ArgumentParsers.newArgumentParser("S3UploadFaster");
 
         argumentParser.addArgument(BUCKET_FLAG).help("The name of the bucket to upload to");
-        argumentParser.addArgument(DRYRUN_FLAG).setDefault(false).action(Arguments.storeTrue()).help("Only confirm that the file to be uploaded exist and exit.");
+        argumentParser.addArgument(DRYRUN_FLAG).type(Boolean.class).setDefault(false).help("Only confirm that the file to be uploaded exist and exit.");
         argumentParser.addArgument(DELETE_LOCAL_FLAG).type(Boolean.class).setDefault(false).help("Delete file after uploading");
         argumentParser.addArgument(FILENAME_FLAG).help("The files to upload");
         Namespace namespace;

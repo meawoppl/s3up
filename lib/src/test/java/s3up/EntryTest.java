@@ -19,6 +19,6 @@ class EntryTest {
         System.out.println(Paths.get("").toAbsolutePath().toString());
         Upload.uploadFile(file, bucketName);
 
-        Entry.main(new String[]{Entry.BUCKET_FLAG, "foo", Entry.DRYRUN_FLAG, "../README.md"});
+        Entry.main(new String[]{Entry.BUCKET_FLAG, "foo", Entry.DRYRUN_FLAG, "true", "../README.md"});
     }
 }

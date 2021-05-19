@@ -10,9 +10,10 @@ import javax.xml.bind.DatatypeConverter;
 import java.io.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
 import java.util.stream.IntStream;
 
 public class Upload {
@@ -35,17 +36,20 @@ public class Upload {
             throw new RuntimeException(e);
         }
 
+        Instant start = Instant.now();
 
-        List<PartETag> etags;
-        try(ProgressBar pb = new ProgressBar("Upload", chunkCount)) {
+        try(
+                ProgressBar pb = new ProgressBar("Upload", chunkCount);
+                MultiPartClosable mpc = new MultiPartClosable(amazonS3, bucketName, keyName);
+        ) {
             pb.setExtraMessage("Initializing");
-            InitiateMultipartUploadRequest initReq = new InitiateMultipartUploadRequest(bucketName, file.getName());
-            InitiateMultipartUploadResult initRes = amazonS3.initiateMultipartUpload(initReq);
-            String uploadID = initRes.getUploadId();
+            mpc.init();
 
-            try {
-                pb.setExtraMessage("Chunks");
-                etags = IntStream.range(0, chunkCount).mapToObj(chunkId -> {
+            pb.setExtraMessage("Chunks");
+            ForkJoinPool customThreadPool = new ForkJoinPool(20);
+
+            final ForkJoinTask<?> task = customThreadPool.submit(() -> {
+                IntStream.range(0, chunkCount).mapToObj(chunkId -> {
                     byte[] chunk;
                     try {
                         chunk = inStream.readNBytes(blockSize);
@@ -53,37 +57,34 @@ public class Upload {
                         throw new RuntimeException(e);
                     }
 
-                    System.out.println(Arrays.toString(chunk));
                     String md5 = md5(chunk);
                     ByteArrayInputStream inputStream = new ByteArrayInputStream(chunk);
 
-                    UploadPartRequest req = new UploadPartRequest()
-                            .withBucketName(bucketName)
-                            .withKey(keyName)
-                            .withPartNumber(chunkId + 1) // Chunks are 1 based....
-                            .withUploadId(uploadID)
+                    return mpc.nextPart()
                             .withMD5Digest(md5)
                             .withInputStream(inputStream)
                             .withPartSize(chunk.length)
                             .withLastPart(chunkId == chunkCount - 1);
+                }).parallel().forEach(req -> {
+                    mpc.sendRequest(req);
+                    pb.step();
+                });
+            });
 
-                    return req;
-                }).parallel().map(req -> {
-                    UploadPartResult resp = amazonS3.uploadPart(req);
-                    return resp.getPartETag();
-                }).peek(r -> pb.step()).collect(Collectors.toList());
-
-                pb.setExtraMessage("Finalizing...");
-                CompleteMultipartUploadResult completeResult = amazonS3.completeMultipartUpload(new CompleteMultipartUploadRequest()
-                        .withBucketName(bucketName)
-                        .withKey(keyName)
-                        .withUploadId(uploadID)
-                        .withPartETags(etags)
-                );
-            } catch (Exception e){
-                amazonS3.abortMultipartUpload(new AbortMultipartUploadRequest(bucketName, keyName, uploadID));
-            }
+            task.join();
+            pb.setExtraMessage("Finalizing...");
+            mpc.complete();
         }
+
+        Instant end = Instant.now();
+
+        final Duration between = Duration.between(start, end);
+
+        double seconds =  between.getSeconds() + between.getNano() * 1e-9;
+
+        double megs = fileSize / 1e6;
+
+        System.out.println(megs/seconds);
     }
 
     public static String md5(byte[] data) {
